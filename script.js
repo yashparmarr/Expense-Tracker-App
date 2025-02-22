@@ -16,89 +16,97 @@ document.addEventListener('DOMContentLoaded', function () {
   calculateTaxes()
 });
 
-// Add an expense
-function addExpense() {
-  const category = document.getElementById('category').value.trim();
-  const amount = parseFloat(document.getElementById('amount').value);
-  const date = document.getElementById('date').value;
-
-  // Validate inputs
-  if (!category || isNaN(amount) || !date) {
-    alert('Please fill all fields correctly.');
-    return;
+function loadUserData() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) return;
+  
+    expenses = JSON.parse(localStorage.getItem(`expenses_${currentUser}`)) || [];
+    budgets = JSON.parse(localStorage.getItem(`budgets_${currentUser}`)) || [];
+  
+    renderExpenses();
+    checkBudgets();
+    updateCharts();
+    provideFinancialAdvice();
   }
-
-  // Create expense object
-  const expense = { category, amount, date };
-
-  // Add to expenses array and save to localStorage
-  expenses.push(expense);
-  localStorage.setItem('expenses', JSON.stringify(expenses));
-
-  // Clear input fields
-  document.getElementById('category').value = '';
-  document.getElementById('amount').value = '';
-  document.getElementById('date').value = '';
-
-  // Update UI
-  renderExpenses();
-  renderTrends();
-  checkBudgets();
-  updateCharts();
-  provideFinancialAdvice();
-  calculateTaxes()
-}
-
+  
+  // Modify addExpense function
+  function addExpense() {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) return;
+  
+    const category = document.getElementById('category').value.trim();
+    const amount = parseFloat(document.getElementById('amount').value);
+    const date = document.getElementById('date').value;
+  
+    if (!category || isNaN(amount) || !date) {
+      alert('Please fill all fields correctly.');
+      return;
+    }
+  
+    const expense = { category, amount, date };
+    expenses.push(expense);
+    localStorage.setItem(`expenses_${currentUser}`, JSON.stringify(expenses));
+  
+    document.getElementById('category').value = '';
+    document.getElementById('amount').value = '';
+    document.getElementById('date').value = '';
+  
+    renderExpenses();
+    renderTrends();
+    checkBudgets();
+    updateCharts();
+    provideFinancialAdvice();
+  }
+  
 // Set a budget
 function setBudget() {
-  const category = document.getElementById('budget-category').value.trim();
-  const limitAmount = parseFloat(document.getElementById('budget-limit').value);
-
-  // Validate inputs
-  if (!category || isNaN(limitAmount)) {
-    alert('Please fill all fields correctly.');
-    return;
+    const category = document.getElementById('budget-category').value.trim();
+    const limitAmount = parseFloat(document.getElementById('budget-limit').value);
+  
+    // Validate inputs
+    if (!category || isNaN(limitAmount)) {
+      alert('Please fill all fields correctly.');
+      return;
+    }
+  
+    // Check if budget already exists for category
+    const existingBudget = budgets.find(b => b.category === category);
+    if (existingBudget) {
+      existingBudget.limitAmount = limitAmount;
+    } else {
+      budgets.push({ category, limitAmount });
+    }
+  
+    // Save to localStorage
+    localStorage.setItem('budgets', JSON.stringify(budgets));
+  
+    // Clear input fields
+    document.getElementById('budget-category').value = '';
+    document.getElementById('budget-limit').value = '';
+  
+    // Update UI
+    checkBudgets();
   }
-
-  // Check if budget already exists for category
-  const existingBudget = budgets.find(b => b.category === category);
-  if (existingBudget) {
-    existingBudget.limitAmount = limitAmount;
-  } else {
-    budgets.push({ category, limitAmount });
-  }
-
-  // Save to localStorage
-  localStorage.setItem('budgets', JSON.stringify(budgets));
-
-  // Clear input fields
-  document.getElementById('budget-category').value = '';
-  document.getElementById('budget-limit').value = '';
-
-  // Update UI
-  checkBudgets();
-}
-
 // Render expenses in the table
 function renderExpenses() {
-  const tbody = document.querySelector('#expense-table tbody');
-  tbody.innerHTML = expenses
-    .map(
-      (expense, index) => `
-      <tr>
-        <td class="p-3">${expense.category}</td>
-        <td class="p-3">Rs${expense.amount.toFixed(2)}</td>
-        <td class="p-3">${expense.date}</td>
-        <td class="p-3">
-          <button class="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition" onclick="deleteExpense(${index})">
-            Delete
-          </button>
-        </td>
-      </tr>
-    `
-    )
-    .join('');
-}
+    const tbody = document.querySelector('#expense-table tbody');
+    tbody.innerHTML = expenses
+      .map(
+        (expense, index) => `
+        <tr>
+          <td class="p-3">${expense.category}</td>
+          <td class="p-3">₹${expense.amount.toFixed(2)}</td>
+          <td class="p-3">${expense.date}</td>
+          <td class="p-3">
+            <button class="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition" onclick="deleteExpense(${index})">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `
+      )
+      .join('');
+  }
 
 // Delete an expense
 function deleteExpense(index) {
@@ -113,7 +121,6 @@ function deleteExpense(index) {
 function renderTrends() {
     const trendsChart = document.getElementById('trends-chart');
   
-    // Ensure the element exists before modifying it
     if (!trendsChart) {
       console.error("Element with ID 'trends-chart' not found.");
       return;
@@ -128,13 +135,12 @@ function renderTrends() {
       .map(
         ([category, total]) => `
         <div class="bg-blue-50 p-3 rounded-lg">
-          <span class="font-semibold">${category}:</span> Rs${total.toFixed(2)}
+          <span class="font-semibold">${category}:</span> ₹${total.toFixed(2)}
         </div>
       `
       )
       .join('');
   }
-  
 
 // Check budget status
 function checkBudgets() {
@@ -151,7 +157,7 @@ function checkBudgets() {
         return `
           <div class="bg-green-50 p-3 rounded-lg flex justify-between items-center">
             <div>
-              <span class="font-semibold">${budget.category}:</span> Rs${totalSpent.toFixed(2)} / Rs${budget.limitAmount.toFixed(2)} (${status})
+              <span class="font-semibold">${budget.category}:</span> ₹${totalSpent.toFixed(2)} / ₹${budget.limitAmount.toFixed(2)} (${status})
             </div>
             <button class="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition" onclick="removeBudget(${index})">
               Delete
@@ -289,42 +295,34 @@ function provideFinancialAdvice() {
   }
 
  // Taxes Calculator
-function calculateTaxes() {
+ function calculateTaxes() {
     const annualIncome = parseFloat(document.getElementById('annual-income').value);
   
-    // if (isNaN(annualIncome)) {
-    //   alert('Please enter a valid annual income.');
-    //   return;
-    // }
-  
-    // Calculate total expenses
     const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0);
   
     // Calculate taxable income (income - expenses)
     const taxableIncome = annualIncome - totalExpenses;
   
     // Simple tax calculation (for demonstration purposes)
-    const taxRate = 0.1; // Assume a flat tax rate of 20%
+    const taxRate = 0.1; // Assume a flat tax rate of 10%
     const estimatedTax = taxableIncome * taxRate;
   
-    // Display tax results
     const taxResults = document.getElementById('tax-results');
     taxResults.innerHTML = `
       <div class="bg-green-50 p-3 rounded-lg">
-        <strong>Annual Income:</strong> Rs${annualIncome.toFixed(2)}
+        <strong>Annual Income:</strong> ₹${annualIncome.toFixed(2)}
       </div>
       <div class="bg-green-50 p-3 rounded-lg">
-        <strong>Total Expenses:</strong> Rs${totalExpenses.toFixed(2)}
+        <strong>Total Expenses:</strong> ₹${totalExpenses.toFixed(2)}
       </div>
       <div class="bg-green-50 p-3 rounded-lg">
-        <strong>Taxable Income:</strong> Rs${taxableIncome.toFixed(2)}
+        <strong>Taxable Income:</strong> ₹${taxableIncome.toFixed(2)}
       </div>
       <div class="bg-green-50 p-3 rounded-lg">
-        <strong>Estimated Tax:</strong> Rs${estimatedTax.toFixed(2)}
+        <strong>Estimated Tax:</strong> ₹${estimatedTax.toFixed(2)}
       </div>
     `;
   
-    // Display potential deductions
     const deductionsList = document.getElementById('deductions-list');
     deductionsList.innerHTML = `
       <div class="bg-blue-50 p-3 rounded-lg">
@@ -338,7 +336,6 @@ function calculateTaxes() {
       </div>
     `;
   
-    // Display potential credits
     const creditsList = document.getElementById('credits-list');
     creditsList.innerHTML = `
       <div class="bg-blue-50 p-3 rounded-lg">
@@ -351,7 +348,6 @@ function calculateTaxes() {
       </div>
     `;
   
-    // Display tax planning tips
     const taxTips = document.getElementById('tax-tips');
     taxTips.innerHTML += `
       <div class="bg-yellow-50 p-3 rounded-lg">
@@ -364,7 +360,6 @@ function calculateTaxes() {
       </div>
     `;
   }
-
   // Remove a budget
 function removeBudget(index) {
     // Remove the budget at the specified index
@@ -375,30 +370,84 @@ function removeBudget(index) {
   
     // Update the UI
     checkBudgets();
-  }
+}
 
-// PAYMENT INTEGRATION
-  document.getElementById("pay-btn").addEventListener("click", function () {
-    var options = {
-        "key": "YOUR_RAZORPAY_KEY", // Replace with your API key
-        "amount": 50000, // Amount in paise (₹500)
-        "currency": "INR",
-        "name": "Expense Tracker",
-        "description": "Payment for Expense",
-        "handler": function (response) {
-            alert("Payment Successful! Payment ID: " + response.razorpay_payment_id);
-            addTransaction(500, "Paid via Razorpay", new Date().toISOString().split("T")[0]);
-        },
-        "prefill": {
-            "name": "User Name",
-            "email": "user@example.com",
-            "contact": "9999999999"
-        },
-        "theme": {
-            "color": "#3399cc"
-        }
-    };
 
-    var rzp = new Razorpay(options);
-    rzp.open();
+// User data (for simplicity, use localStorage; in a real app, use a backend)
+let users = JSON.parse(localStorage.getItem('users')) || [];
+
+// DOM Elements
+const loginPage = document.getElementById('login-page');
+const signupPage = document.getElementById('signup-page');
+const expenseTrackerPage = document.getElementById('expense-tracker-page');
+const showSignupLink = document.getElementById('show-signup');
+const showLoginLink = document.getElementById('show-login');
+const loginForm = document.getElementById('login-form');
+const signupForm = document.getElementById('signup-form');
+
+// Show Signup Page
+showSignupLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  loginPage.classList.add('hidden');
+  signupPage.classList.remove('hidden');
 });
+
+// Show Login Page
+showLoginLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  signupPage.classList.add('hidden');
+  loginPage.classList.remove('hidden');
+});
+
+// Handle Login
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+  
+    const user = users.find((u) => u.email === email && u.password === password);
+    if (user) {
+      alert('Login successful!');
+      localStorage.setItem('currentUser', email); // Store logged-in user
+      loginPage.classList.add('hidden');
+      expenseTrackerPage.classList.remove('hidden');
+      loadUserData(); // Load this user's expenses & budgets
+    } else {
+      alert('Invalid email or password.');
+    }
+  });
+  
+
+  signupForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+  
+    const userExists = users.some((u) => u.email === email);
+    if (userExists) {
+      alert('User already exists.');
+    } else {
+      users.push({ email, password });
+      localStorage.setItem('users', JSON.stringify(users));
+      localStorage.setItem(`expenses_${email}`, JSON.stringify([])); // Store empty expenses for this user
+      localStorage.setItem(`budgets_${email}`, JSON.stringify([])); // Store empty budgets
+      alert('Signup successful! Please login.');
+      signupPage.classList.add('hidden');
+      loginPage.classList.remove('hidden');
+    }
+  });
+  
+//logout
+  function logout() {
+    localStorage.removeItem('currentUser'); // Clear session
+    document.getElementById('expense-tracker-page').classList.add('hidden');
+    document.getElementById('login-page').classList.remove('hidden');
+    alert('Logged out successfully!');
+  }
+  
+
+// Show Login Page by default
+loginPage.classList.remove('hidden');
+signupPage.classList.add('hidden');
+expenseTrackerPage.classList.add('hidden');
+
