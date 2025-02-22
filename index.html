@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-4">
+    <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">💰 Expense Tracker</h1>
+
+    <!-- Add Expense Form -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">➕ Add Expense</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input type="text" id="category" placeholder="Category (e.g., Food, Transport)" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="number" id="amount" placeholder="Amount" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="date" id="date" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <button onclick="addExpense()" class="w-full mt-4 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition">Add Expense</button>
+    </div>
+
+    <!-- Set Budget Form -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">📊 Set Budget</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" id="budget-category" placeholder="Category" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+        <input type="number" id="budget-limit" placeholder="Budget Limit" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+      </div>
+      <button onclick="setBudget()" class="w-full mt-4 bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition">Set Budget</button>
+    </div>
+
+    <!-- Expenses Table -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">📝 Expenses</h2>
+      <table class="w-full" id="expense-table">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="p-3 text-left">Category</th>
+            <th class="p-3 text-left">Amount</th>
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Expenses will be added here dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data Visualization -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">📊 Data Visualization</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Pie Chart -->
+        <div>
+          <h3 class="text-xl font-semibold text-gray-700 mb-4">Expense Breakdown (Pie Chart)</h3>
+          <canvas id="pieChart"></canvas>
+        </div>
+        <!-- Bar Chart -->
+        <div>
+          <h3 class="text-xl font-semibold text-gray-700 mb-4">Expense Trends (Bar Chart)</h3>
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+      <!-- Line Chart -->
+      <div class="mt-8">
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Monthly Spending (Line Chart)</h3>
+        <canvas id="lineChart"></canvas>
+      </div>
+      <!-- Trends Section -->
+        <div id="trends-chart" class="space-y-3 p-4 bg-gray-50 rounded-lg">
+            <!-- Trends will be displayed here dynamically -->
+        </div>
+        
+    </div>
+
+    <!-- AI Financial Advisor -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">🤖 AI Financial Advisor</h2>
+        <div id="ai-advice" class="space-y-4">
+          <!-- AI-driven advice will be displayed here -->
+        </div>
+      </div>
+
+            <!-- Taxes Calculator -->
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">🧮 Taxes Calculator</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="number" id="annual-income" placeholder="Annual Income" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button onclick="calculateTaxes()" class="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition">Calculate Taxes</button>
+        </div>
+        <div id="tax-results" class="mt-4 space-y-3">
+          <!-- Tax results will be displayed here -->
+        </div>
+        <div id="tax-tips" class="mt-6 space-y-4">
+          <h3 class="text-xl font-semibold text-gray-700 mb-4">💡 Tax Tips & Deductions</h3>
+          <div id="deductions-list" class="space-y-3">
+            <!-- Potential deductions will be displayed here -->
+          </div>
+          <div id="credits-list" class="space-y-3">
+            <!-- Potential credits will be displayed here -->
+          </div>
+          <div class="bg-yellow-50 p-3 rounded-lg">
+            <strong>Tip:</strong> Consult a tax professional for personalized advice.
+          </div>
+        </div>
+      </div>
+      
+          <!-- Tour Guide -->
+          <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">🗺️ Tour Guide</h2>
+            <div id="tour-steps" class="space-y-4">
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <strong>Step 1:</strong> Add your expenses using the "Add Expense" form.
+              </div>
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <strong>Step 2:</strong> Set budgets for different categories using the "Set Budget" form.
+              </div>
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <strong>Step 3:</strong> Use the Taxes Calculator to estimate your annual taxes.
+              </div>
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <strong>Step 4:</strong> Check the AI Financial Advisor for personalized recommendations.
+              </div>
+            </div>
+          </div>
+
+    <!-- Budget Status -->
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">📉 Budget Status</h2>
+      <div id="budget-status" class="space-y-3">
+        <!-- Budget status will be displayed here -->
+      </div>
+    </div>
+  </div>
+
+  <button id="pay-btn" class="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition">
+    💳 Pay Now
+  </button>  
+
+
+  <script src="script.js"></script>
+</body>
+</html>
